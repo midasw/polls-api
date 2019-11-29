@@ -12,7 +12,7 @@ namespace PollsAPI.Services
     {
         public void Send(string email, string subject, string message)
         {
-            var client = new SendGridClient("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");
+            var client = new SendGridClient(Config.sendGridApiKey);
             var from = new EmailAddress("test@example.com", "Example User");
             var to = new EmailAddress(email, "Example User");
             var plainTextContent = message;

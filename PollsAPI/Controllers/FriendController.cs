@@ -23,19 +23,101 @@ namespace PollsAPI.Controllers
             _context = context;
         }
 
-        // GET: api/Friend/requests
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateFriend(long id, Friend friend)
+        {
+            if (id != friend.FriendID)
+            {
+                return BadRequest();
+            }
+            _context.Entry(friend).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // DELETE: api/Friend/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteFriend(long id)
+        {
+            var friend = await _context.Friends.FindAsync(id);
+            if (friend == null)
+            {
+                return NotFound();
+            }
+
+            _context.Friends.Remove(friend);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // GET: api/Friend
         [Authorize]
-        [HttpGet("requests")]
-        public async Task<ActionResult<IEnumerable<GetUserDto>>> GetFriendRequests()
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<GetUserDto>>> GetFriends()
         {
             long userID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == "UserID").Value);
 
-            List<GetUserDto> list = _context.Friends.Where(f => f.ReceiverID == userID).Select(p => new GetUserDto()
+            List<GetUserDto> list1 = _context.Friends
+                .Where(f => f.Status == "Accepted" && f.SenderID == userID)
+                .Select(f => new GetUserDto()
+                {
+                    UserID = f.Receiver.UserID,
+                    Email = f.Receiver.Email,
+                    Name = f.Receiver.Name,
+                    Activated = f.Receiver.Activated
+                })
+                .ToList();
+
+            List<GetUserDto> list2 = _context.Friends
+                .Where(f => f.Status == "Accepted" && f.ReceiverID == userID)
+                .Select(f => new GetUserDto()
+                {
+                    UserID = f.Sender.UserID,
+                    Email = f.Sender.Email,
+                    Name = f.Sender.Name,
+                    Activated = f.Sender.Activated
+                })
+                .ToList();
+
+            return Ok(list1.Concat(list2).ToList());
+        }
+
+        // GET: api/Friend/requests
+        [Authorize]
+        [HttpGet("requests")]
+        public async Task<ActionResult<IEnumerable<GetFriendDto>>> GetFriendRequests()
+        {
+            long userID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == "UserID").Value);
+
+            /*            List<GetUserDto> list = _context.Friends.Where(f => f.ReceiverID == userID && f.Status == "Pending").Select(p => new GetUserDto()
+                        {
+                            UserID = p.Sender.UserID,
+                            Email = p.Sender.Email,
+                            Name = p.Sender.Name,
+                            Activated = p.Sender.Activated,
+                        })
+                        .ToList();*/
+
+            //List<Friend> list =_context.Friends.Where(f => f.ReceiverID == userID && f.Status == "Pending").Include(f => f.Receiver).Include(f => f.Sender).ToList();
+
+            List<GetFriendDto> list = _context.Friends.Where(f => f.ReceiverID == userID && f.Status == "Pending").Select(f => new GetFriendDto()
             {
-                UserID = p.Sender.UserID,
-                Email = p.Sender.Email,
-                Name = p.Sender.Name,
-                Activated = p.Sender.Activated,
+                FriendID = f.FriendID,
+                Sender = new GetUserDto()
+                {
+                    UserID = f.Sender.UserID,
+                    Email = f.Sender.Email,
+                    Name = f.Sender.Name,
+                    Activated = f.Sender.Activated
+                },
+                Receiver = new GetUserDto()
+                {
+                    UserID = f.Receiver.UserID,
+                    Email = f.Receiver.Email,
+                    Name = f.Receiver.Name,
+                    Activated = f.Receiver.Activated
+                },
+                Status = f.Status
             })
             .ToList();
 
