@@ -79,6 +79,11 @@ namespace PollsAPI.Controllers
                 })
                 .ToList();
 
+            /*
+            var users = _context.Users.Join(_context.Friends, cu => cu.UserID, f => f.SenderID, (cu, f) => new { cu })
+                .ToList();*/
+
+
             return Ok(list1.Concat(list2).ToList());
         }
 

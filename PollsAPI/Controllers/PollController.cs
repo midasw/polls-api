@@ -32,6 +32,27 @@ namespace PollsAPI.Controllers
             return await _context.Polls.Where(p => p.OwnerID == userID).ToListAsync();
         }
 
+        // GET: api/Poll/shared
+        [Authorize]
+        [HttpGet("shared")]
+        public async Task<ActionResult<IEnumerable<GetPollDto2>>> GetSharedPolls()
+        {
+            long userID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == "UserID").Value);
+
+            return await _context.PollUsers.Where(pu => pu.UserID == userID).Select(pu => new GetPollDto2() {
+                PollID = pu.Poll.PollID,
+                Name = pu.Poll.Name,
+                Owner = new GetUserDto()
+                {
+                    UserID = pu.Poll.Owner.UserID,
+                    Name = pu.Poll.Owner.Name,
+                    Email = pu.Poll.Owner.Email,
+                    Activated = pu.Poll.Owner.Activated
+                }
+            })
+            .ToListAsync();
+        }
+
         [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<GetPollDto>> GetPoll(long id)
@@ -85,7 +106,16 @@ namespace PollsAPI.Controllers
                     Answer = a
                 }));
 
+
             _context.Polls.Add(poll);
+            await _context.SaveChangesAsync();
+
+            _context.PollUsers.Add(new PollUser()
+            {
+                PollID = poll.PollID,
+                UserID = userID
+            });
+
             await _context.SaveChangesAsync();
 
             return Ok(new GetPollDto()

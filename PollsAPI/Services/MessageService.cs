@@ -23,7 +23,7 @@ namespace PollsAPI.Services
 
         public void SendActivationMail(string email, string name, Guid guid)
         {
-            var client = new SendGridClient("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");
+            var client = new SendGridClient(Config.sendGridApiKey);
             var from = new EmailAddress("noreply@angularpolls.com", "AngularPolls");
             var to = new EmailAddress(email, name);
             var plainTextContent = "";

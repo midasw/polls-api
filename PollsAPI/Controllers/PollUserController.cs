@@ -26,9 +26,36 @@ namespace PollsAPI.Controllers
         // GET: api/PollUser
         [Authorize]
         [HttpGet("{id}")]
-        public async Task<ActionResult<IEnumerable<PollUser>>> GetPollUsers(long id)
+        public async Task<ActionResult<IEnumerable<GetPollUserDto>>> GetPollUsers(long id)
         {
-            return await _context.PollUsers.Where(pu => pu.PollID == id).ToListAsync();
+            List<GetPollUserDto> pollUsers = _context.PollUsers.Where(pu => pu.PollID == id).Select(pu => new GetPollUserDto()
+            {
+                PollUserID = pu.PollUserID,
+                PollID = pu.PollID,
+                User = new GetUserDto()
+                {
+                    Email = pu.User.Email,
+                    Name = pu.User.Name,
+                    Activated = pu.User.Activated,
+                    UserID = pu.User.UserID
+                }
+            })
+            .ToList();
+
+            return pollUsers;
+
+            //return await _context.PollUsers.Where(pu => pu.PollID == id).ToListAsync();
         }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<ActionResult<PollUser>> PostPollUser(PollUser pu)
+        {
+            _context.PollUsers.Add(pu);
+            await _context.SaveChangesAsync();
+
+            return Ok(pu);
+        }
+
     }
 }
