@@ -28,10 +28,25 @@ namespace PollsAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<IEnumerable<GetPollUserDto>>> GetPollUsers(long id)
         {
-            List<GetPollUserDto> pollUsers = _context.PollUsers.Where(pu => pu.PollID == id).Select(pu => new GetPollUserDto()
+            GetPollUserDto owner = await _context.Polls.Where(p => p.PollID == id).Select(p => new GetPollUserDto()
+            {
+                PollID = p.PollID,
+                IsOwner = true,
+                User = new GetUserDto()
+                {
+                    Email = p.Owner.Email,
+                    Name = p.Owner.Name,
+                    Activated = p.Owner.Activated,
+                    UserID = p.Owner.UserID
+                }
+            })
+            .FirstOrDefaultAsync();
+
+            List<GetPollUserDto> pollUsers = await _context.PollUsers.Where(pu => pu.PollID == id).Select(pu => new GetPollUserDto()
             {
                 PollUserID = pu.PollUserID,
                 PollID = pu.PollID,
+                IsOwner = false,
                 User = new GetUserDto()
                 {
                     Email = pu.User.Email,
@@ -40,11 +55,11 @@ namespace PollsAPI.Controllers
                     UserID = pu.User.UserID
                 }
             })
-            .ToList();
+            .ToListAsync();
 
-            return pollUsers;
+            pollUsers.Add(owner);
 
-            //return await _context.PollUsers.Where(pu => pu.PollID == id).ToListAsync();
+            return Ok(pollUsers.OrderBy(pu => pu.User.Name).ToList());
         }
 
         [Authorize]

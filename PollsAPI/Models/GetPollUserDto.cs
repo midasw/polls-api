@@ -10,6 +10,7 @@ namespace PollsAPI.Models
     public class GetPollUserDto
     {
         public long PollUserID { get; set; }
+        public bool IsOwner { get; set; }
         public GetUserDto User { get; set; }
         public long PollID { get; set; }
     }

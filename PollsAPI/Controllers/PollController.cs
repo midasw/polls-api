@@ -57,7 +57,7 @@ namespace PollsAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<GetPollDto>> GetPoll(long id)
         {
-            GetPollDto dto = _context.Polls.Where(p => p.PollID == id).Select(p => new GetPollDto()
+            GetPollDto dto = await _context.Polls.Where(p => p.PollID == id).Select(p => new GetPollDto()
             {
                 PollID = p.PollID,
                 Name = p.Name,
@@ -69,7 +69,6 @@ namespace PollsAPI.Controllers
                     {
                         VoteID = v.VoteID,
                         AnswerID = v.AnswerID,
-                        //UserID = v.UserID
                         User = new GetUserDto()
                         {
                             UserID = v.User.UserID,
@@ -78,12 +77,14 @@ namespace PollsAPI.Controllers
                             Activated = v.User.Activated
                         }
                     })
+                    .OrderBy(v => v.User.Name)
                     .ToList()
                 })
                 .ToList()
             })
-            .FirstOrDefault();
+            .FirstOrDefaultAsync();
 
+            dto.Answers = dto.Answers.OrderByDescending(a => a.Votes.Count).ToList();
             return Ok(dto);
         }
 
@@ -100,22 +101,12 @@ namespace PollsAPI.Controllers
                 Answers = new List<PollAnswer>()
             };
 
-            dto.Answers.ForEach(a => poll.Answers.Add(
-                new PollAnswer()
-                {
-                    Answer = a
-                }));
-
+            dto.Answers.ForEach(a => poll.Answers.Add(new PollAnswer()
+            {
+                Answer = a
+            }));
 
             _context.Polls.Add(poll);
-            await _context.SaveChangesAsync();
-
-            _context.PollUsers.Add(new PollUser()
-            {
-                PollID = poll.PollID,
-                UserID = userID
-            });
-
             await _context.SaveChangesAsync();
 
             return Ok(new GetPollDto()

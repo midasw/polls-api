@@ -57,34 +57,26 @@ namespace PollsAPI.Controllers
         {
             long userID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == "UserID").Value);
 
-            List<GetUserDto> list1 = _context.Friends
-                .Where(f => f.Status == "Accepted" && f.SenderID == userID)
-                .Select(f => new GetUserDto()
+            var friends = await _context.Friends.Include(v => v.Receiver).Include(v => v.Sender)
+                .Where(v => (v.SenderID == userID || v.ReceiverID == userID) && v.Status == "Accepted")
+                .ToListAsync();
+
+            List<GetUserDto> users = new List<GetUserDto>();
+
+            foreach (Friend f in friends)
+            {
+                User user = (f.SenderID == userID ? f.Receiver : f.Sender);
+
+                users.Add(new GetUserDto()
                 {
-                    UserID = f.Receiver.UserID,
-                    Email = f.Receiver.Email,
-                    Name = f.Receiver.Name,
-                    Activated = f.Receiver.Activated
-                })
-                .ToList();
+                    Name = user.Name,
+                    Email = user.Email,
+                    Activated = user.Activated,
+                    UserID = user.UserID
+                });
+            }
 
-            List<GetUserDto> list2 = _context.Friends
-                .Where(f => f.Status == "Accepted" && f.ReceiverID == userID)
-                .Select(f => new GetUserDto()
-                {
-                    UserID = f.Sender.UserID,
-                    Email = f.Sender.Email,
-                    Name = f.Sender.Name,
-                    Activated = f.Sender.Activated
-                })
-                .ToList();
-
-            /*
-            var users = _context.Users.Join(_context.Friends, cu => cu.UserID, f => f.SenderID, (cu, f) => new { cu })
-                .ToList();*/
-
-
-            return Ok(list1.Concat(list2).ToList());
+            return Ok(users.OrderBy(u => u.Name).ToList());
         }
 
         // GET: api/Friend/requests
@@ -94,18 +86,7 @@ namespace PollsAPI.Controllers
         {
             long userID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == "UserID").Value);
 
-            /*            List<GetUserDto> list = _context.Friends.Where(f => f.ReceiverID == userID && f.Status == "Pending").Select(p => new GetUserDto()
-                        {
-                            UserID = p.Sender.UserID,
-                            Email = p.Sender.Email,
-                            Name = p.Sender.Name,
-                            Activated = p.Sender.Activated,
-                        })
-                        .ToList();*/
-
-            //List<Friend> list =_context.Friends.Where(f => f.ReceiverID == userID && f.Status == "Pending").Include(f => f.Receiver).Include(f => f.Sender).ToList();
-
-            List<GetFriendDto> list = _context.Friends.Where(f => f.ReceiverID == userID && f.Status == "Pending").Select(f => new GetFriendDto()
+            return await _context.Friends.Where(f => f.ReceiverID == userID && f.Status == "Pending").Select(f => new GetFriendDto()
             {
                 FriendID = f.FriendID,
                 Sender = new GetUserDto()
@@ -124,9 +105,7 @@ namespace PollsAPI.Controllers
                 },
                 Status = f.Status
             })
-            .ToList();
-
-            return Ok(list);
+            .ToListAsync();
         }
 
         [HttpPost("{email}")]
