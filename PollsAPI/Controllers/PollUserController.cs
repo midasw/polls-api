@@ -23,7 +23,7 @@ namespace PollsAPI.Controllers
             _context = context;
         }
 
-        // GET: api/PollUser
+        // GET: api/PollUser/5
         [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<IEnumerable<GetPollUserDto>>> GetPollUsers(long id)
@@ -62,6 +62,7 @@ namespace PollsAPI.Controllers
             return Ok(pollUsers.OrderBy(pu => pu.User.Name).ToList());
         }
 
+        // POST: api/PollUser
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<PollUser>> PostPollUser(PollUser pu)

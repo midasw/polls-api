@@ -11,6 +11,7 @@ namespace PollsAPI.Services
         User Authenticate(string email, string password);
         bool UserExists(string email);
         User Register(string email, string password, string name, Guid guid);
+        User RegisterInvitee(string password, string name, string guid);
         User Activate(string guid);
     }
 }

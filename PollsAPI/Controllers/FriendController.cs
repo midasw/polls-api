@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PollsAPI.Models;
 using Microsoft.AspNetCore.Authorization;
+using PollsAPI.Services;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,12 +18,17 @@ namespace PollsAPI.Controllers
     public class FriendController : ControllerBase
     {
         private readonly PollsContext _context;
+        private IMessageService _messageService;
+        private IUserService _userService;
 
-        public FriendController(PollsContext context)
+        public FriendController(PollsContext context, IMessageService messageService, IUserService userService)
         {
             _context = context;
+            _messageService = messageService;
+            _userService = userService;
         }
 
+        // PUT: api/Friend/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateFriend(long id, Friend friend)
         {
@@ -108,24 +114,26 @@ namespace PollsAPI.Controllers
             .ToListAsync();
         }
 
+        // POST: api/Friend
         [HttpPost("{email}")]
         public async Task<ActionResult<GetUserDto>> AddFriend(string email)
         {
+            long userID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == "UserID").Value);
+            User sender = _context.Users.Find(userID);
+
             User receiver = _context.Users.SingleOrDefault(u => u.Email == email);
 
             if (receiver == null)
             {
-                receiver = new User
-                {
-                    Email = email
-                };
-                _context.Users.Add(receiver);
-                _context.SaveChanges();
+                Guid guid = Guid.NewGuid();
+
+                receiver = _userService.Register(email, null, null, guid);
+
+                if (receiver == null)
+                    return BadRequest(new { message = "An error occured" });
+
+                _messageService.SendInvitationMail(email, sender.Name, guid);
             }
-
-            long userID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == "UserID").Value);
-
-            User sender = _context.Users.Find(userID);
 
             Friend friend = new Friend
             {

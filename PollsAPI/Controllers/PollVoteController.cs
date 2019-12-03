@@ -23,6 +23,7 @@ namespace PollsAPI.Controllers
             _context = context;
         }
 
+        // POST: api/PollVote
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<PollVote>> PostVote(PollVote vote)
@@ -33,6 +34,7 @@ namespace PollsAPI.Controllers
             return Ok(vote);
         }
 
+        // DELETE: api/PollVote/5
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<ActionResult<PollVote>> DeleteVote(long id)

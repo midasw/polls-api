@@ -20,6 +20,8 @@ namespace PollsAPI.Controllers
             _userService = userService;
             _messageService = messageService;
         }
+
+        // POST: api/User/authenticate
         [HttpPost("authenticate")]
         public IActionResult Authenticate([FromBody]User userParam)
         {
@@ -33,6 +35,8 @@ namespace PollsAPI.Controllers
 
             return Ok(user);
         }
+
+        // POST: api/User/register
         [HttpPost("register")]
         public IActionResult Register([FromBody]RegisterModel param)
         {
@@ -53,6 +57,23 @@ namespace PollsAPI.Controllers
 
             return Ok(user);
         }
+
+        // POST: api/User/register-invitee
+        [HttpPost("register-invitee")]
+        public IActionResult RegisterInvitee([FromBody]RegisterInviteeModel param)
+        {
+            if (param.Password != param.PasswordConfirmation)
+                return BadRequest(new { message = "Passwords don't match" });
+
+            var user = _userService.RegisterInvitee(param.Password, param.Name, param.Guid);
+
+            if (user == null)
+                return BadRequest(new { message = "An error occured" });
+
+            return Ok(user);
+        }
+
+        // GET: api/User/activate/{guid}
         [HttpGet("activate/{guid}")]
         public IActionResult Activate(string guid)
         {

@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 
 namespace PollsAPI.Models
 {
-    public class Member
+    public class RegisterInviteeModel
     {
-        public long MemberID{ get; set; }
+        public string Guid { get; set; }
+        public string Password { get; set; }
+        public string PasswordConfirmation { get; set; }
         public string Name { get; set; }
-        public DateTime Dob { get; set; }
-        public string Address { get; set; }
     }
 }

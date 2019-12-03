@@ -29,7 +29,7 @@ namespace PollsAPI.Controllers
         public async Task<ActionResult<IEnumerable<Poll>>> GetPolls()
         {
             long userID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == "UserID").Value);
-            return await _context.Polls.Where(p => p.OwnerID == userID).ToListAsync();
+            return await _context.Polls.Where(p => p.OwnerID == userID).OrderBy(p => p.Name).ToListAsync();
         }
 
         // GET: api/Poll/shared
@@ -50,13 +50,23 @@ namespace PollsAPI.Controllers
                     Activated = pu.Poll.Owner.Activated
                 }
             })
+            .OrderBy(pu => pu.Name)
             .ToListAsync();
         }
 
+        // GET: api/Poll/5
         [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<GetPollDto>> GetPoll(long id)
         {
+            long userID = Convert.ToInt64(User.Claims.FirstOrDefault(c => c.Type == "UserID").Value);
+
+            PollUser pu = _context.PollUsers.SingleOrDefault(x => x.PollID == id && x.UserID == userID);
+            Poll p = _context.Polls.SingleOrDefault(p => p.PollID == id);
+
+            if (pu == null && p.OwnerID != userID)
+                return BadRequest(new { message = "You have no permission to view this poll. Get out of here you sneaky bastard!" });
+
             GetPollDto dto = await _context.Polls.Where(p => p.PollID == id).Select(p => new GetPollDto()
             {
                 PollID = p.PollID,
@@ -88,6 +98,7 @@ namespace PollsAPI.Controllers
             return Ok(dto);
         }
 
+        // POST: api/Poll
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<GetPollDto>> CreatePoll([FromBody] CreatePollDto dto)

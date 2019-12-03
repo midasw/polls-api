@@ -12,7 +12,6 @@ namespace PollsAPI.Models
             : base(options)
         {
         }
-        public DbSet<Member> Members { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<UserActivation> UserActivations { get; set; }
         public DbSet<Poll> Polls { get; set; }
@@ -22,8 +21,6 @@ namespace PollsAPI.Models
         public DbSet<PollUser> PollUsers { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Member>().ToTable("Member");
-
             modelBuilder.Entity<User>().ToTable("User");
             modelBuilder.Entity<User>().Property(p => p.Activated).HasDefaultValue(false);
             modelBuilder.Entity<UserActivation>().ToTable("UserActivation");

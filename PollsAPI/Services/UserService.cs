@@ -77,6 +77,25 @@ namespace PollsAPI.Services
             return userActivation.User;
         }
 
+        public User RegisterInvitee(string password, string name, string guid)
+        {
+            var userActivation = _context.UserActivations.Include(u => u.User).SingleOrDefault(x => x.Guid == guid);
+
+            if (userActivation == null)
+                return null;
+
+            var user = userActivation.User;
+
+            user.Password = password;
+            user.Name = name;
+            user.Activated = true;
+
+            _context.UserActivations.Remove(userActivation);
+            _context.SaveChanges();
+
+            return user;
+        }
+
         public User Activate(string guid)
         {
             var userActivation = _context.UserActivations.Include(u=>u.User).SingleOrDefault(x => x.Guid == guid);
@@ -86,15 +105,9 @@ namespace PollsAPI.Services
 
             var user = userActivation.User;
 
-            /*            var user = _context.Users.Find(userActivation.UserID);
-
-                        if (user == null)
-                            return null;*/
-
             user.Activated = true;
 
             _context.UserActivations.Remove(userActivation);
-
             _context.SaveChanges();
 
             return user;
